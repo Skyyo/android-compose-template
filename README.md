@@ -3,7 +3,7 @@ Project with various common components, to reduce "project setup" operations
 
 
 
-be very careful when choosing between ```liveData``` & ```stateFlows```. 
+Be very careful when choosing between ```liveData``` & ```stateFlows```. 
 We still can't drop ```liveData``` not only because we need it in the ```savedStateHandle.getLiveData<Key>``` scenarios, but because ```stateFlow``` can't reproduce a certain behaviour in "search-like" scenarios:
 ```kotlin
 class ViewModel(repository: Repository) : ViewModel() {
@@ -24,6 +24,10 @@ class ViewModel(repository: Repository) : ViewModel() {
 Always use ```liveData``` for cases when we are performing ```observable.switchMap/flatMapLatest``` type of operations. In code above it's the ```query```, it has to be declared as ```liveData```. You can always observe it using ```.asFlow```
 Sooner or later the behaviour of ```stateFlow``` will be changed, and we'll be able to ditch the ```liveData``` once and for all.
 Behaviour difference is explained [here](https://github.com/Kotlin/kotlinx.coroutines/issues/2223) 
+
+Be carefull how you update the ```stateFlow``` value, since using ```stateFlow.value = stateFlow.value.copy()``` can create unexpected results. If between the time copy function completes and the ```stateFlows``` new value is emitted another thread tries to update the ```stateFlow``` — by using copy and updating one of the properties that the current copy isn’t modifying — we could end up with results we were not expecting. So please use [update](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/update.html) in such cases. 
+
+
 
 - always attempt to use function references
 

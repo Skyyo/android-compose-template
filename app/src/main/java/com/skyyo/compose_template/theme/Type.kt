@@ -1,4 +1,4 @@
-package com.skyyo.compose_template.ui.theme
+package com.skyyo.compose_template.theme
 
 import androidx.compose.material.Typography
 import androidx.compose.ui.text.TextStyle

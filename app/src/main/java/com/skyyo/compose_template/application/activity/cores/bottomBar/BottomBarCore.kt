@@ -21,19 +21,15 @@ fun BottomBarCore(
 ) {
     val isBottomBarVisible = rememberSaveable { mutableStateOf(false) }
     val selectedTab = rememberSaveable { mutableStateOf(0) }
-//    val backgroundColour = remember { mutableStateOf(Color.Black) }
     DisposableEffect(Unit) {
         val callback = NavController.OnDestinationChangedListener { _, destination, args ->
-//            log("${destination.route}")
-//            log("first destination:${navController.findDestination(navController.graph.findStartDestination().id)}")
-            //TODO make args based?
-            systemUiController.statusBarDarkContentEnabled = false
             when (destination.route) {
-                Destination.SignIn.route -> isBottomBarVisible.value = false
-//                Screens.Profile.route -> backgroundColour.value = Color.Green
+                Destination.SignIn.route -> {
+                    systemUiController.statusBarDarkContentEnabled = false
+                    isBottomBarVisible.value = false
+                }
                 else -> {
                     isBottomBarVisible.value = true
-//                    backgroundColour.value = Color.Black
                 }
             }
         }
@@ -44,7 +40,6 @@ fun BottomBarCore(
     }
 
     Scaffold(
-//        backgroundColor = backgroundColour.value,
         bottomBar = {
             AnimatedBottomBar(
                 bottomBarScreens,

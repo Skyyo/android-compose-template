@@ -19,7 +19,9 @@ import com.google.accompanist.navigation.material.ModalBottomSheetLayout
 import com.google.accompanist.navigation.material.rememberBottomSheetNavigator
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.skyyo.compose_template.application.Destination
+import com.skyyo.compose_template.application.activity.cores.bottomBar.BottomBarCore
 import com.skyyo.compose_template.application.activity.cores.drawer.DrawerCore
+import com.skyyo.compose_template.application.activity.cores.simple.SimpleCore
 import com.skyyo.compose_template.application.persistance.DataStoreManager
 import com.skyyo.compose_template.application.persistance.room.AppDatabase
 import com.skyyo.compose_template.theme.ComposetemplateTheme
@@ -44,20 +46,21 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var appDatabase: AppDatabase
 
-    @OptIn(ExperimentalMaterialApi::class)
-    @ExperimentalMaterialNavigationApi
-    @ExperimentalAnimationApi
+    @OptIn(
+        ExperimentalMaterialApi::class,
+        ExperimentalMaterialNavigationApi::class,
+        ExperimentalAnimationApi::class
+    )
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyEdgeToEdge()
-        //these boys won't be hoisted in the template
+
         val drawerOrBottomBarScreens = listOf(
             Destination.Tab1,
             Destination.Tab2,
             Destination.Tab3,
         )
         val startDestination = when {
-            //TODO measure async + splash delegation profit
             runBlocking { dataStoreManager.getAccessToken() } == null -> Destination.SignIn.route
             else -> Destination.Tab1.route
         }
@@ -91,25 +94,26 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            ComposetemplateTheme() {
-                ProvideWindowInsets(windowInsetsAnimationsEnabled = true) {
+            ComposetemplateTheme {
+                ProvideWindowInsets {
                     // used only for the bottom sheet destinations
                     ModalBottomSheetLayout(bottomSheetNavigator) {
-//                        SimpleCore(
-//                            startDestination,
-//                            navController
-//                        )
+                        SimpleCore(
+                            startDestination,
+                            navController,
+                            systemUiController
+                        )
 //                        BottomBarCore(
 //                            drawerOrBottomBarScreens,
 //                            startDestination,
 //                            navController,
 //                            systemUiController,
 //                        )
-                        DrawerCore(
-                            drawerOrBottomBarScreens,
-                            startDestination,
-                            navController
-                        )
+//                        DrawerCore(
+//                            drawerOrBottomBarScreens,
+//                            startDestination,
+//                            navController,
+//                            systemUiController)
                     }
                 }
             }

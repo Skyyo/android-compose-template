@@ -6,10 +6,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.google.accompanist.systemuicontroller.SystemUiController
 import com.skyyo.compose_template.application.Destination
 import com.skyyo.compose_template.application.activity.PopulatedNavHost
 import com.skyyo.compose_template.extensions.navigateToRootDestination
-import com.skyyo.samples.extensions.log
 import kotlinx.coroutines.launch
 
 
@@ -18,7 +18,8 @@ import kotlinx.coroutines.launch
 fun DrawerCore(
     drawerScreens: List<Destination>,
     startDestination: String,
-    navController: NavHostController
+    navController: NavHostController,
+    systemUiController: SystemUiController
 ) {
     val isDrawerVisible = rememberSaveable { mutableStateOf(false) }
     val selectedTab = rememberSaveable { mutableStateOf(0) }
@@ -28,10 +29,15 @@ fun DrawerCore(
 
     DisposableEffect(Unit) {
         val callback = NavController.OnDestinationChangedListener { _, destination, args ->
-            log("${destination.route}")
             when (destination.route) {
-                Destination.SignIn.route -> isDrawerVisible.value = false
-                else -> isDrawerVisible.value = true
+                Destination.SignIn.route -> {
+                    systemUiController.statusBarDarkContentEnabled = false
+                    isDrawerVisible.value = false
+                }
+                else -> {
+                    systemUiController.statusBarDarkContentEnabled = true
+                    isDrawerVisible.value = true
+                }
             }
         }
         navController.addOnDestinationChangedListener(callback)
@@ -46,7 +52,14 @@ fun DrawerCore(
         drawerGesturesEnabled = scaffoldState.drawerState.let { it.isOpen && !it.isAnimationRunning },
         floatingActionButton = {
             if (isDrawerVisible.value) {
-                FloatingActionButton(onClick = { scope.launch { scaffoldState.drawerState.animateTo(DrawerValue.Open, animationSpec) } }) {
+                FloatingActionButton(onClick = {
+                    scope.launch {
+                        scaffoldState.drawerState.animateTo(
+                            DrawerValue.Open,
+                            animationSpec
+                        )
+                    }
+                }) {
                     Text(text = "open drawer")
                 }
             }
@@ -64,7 +77,12 @@ fun DrawerCore(
                     }
                     //Skip closing drawer if it's not opened completely
                     if (scaffoldState.drawerState.let { it.isClosed && it.isAnimationRunning }) return@Drawer
-                    scope.launch { scaffoldState.drawerState.animateTo(DrawerValue.Closed, animationSpec) }
+                    scope.launch {
+                        scaffoldState.drawerState.animateTo(
+                            DrawerValue.Closed,
+                            animationSpec
+                        )
+                    }
                 }
             }
         },

@@ -5,22 +5,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.google.accompanist.systemuicontroller.SystemUiController
 import com.skyyo.compose_template.application.Destination
 import com.skyyo.compose_template.application.activity.PopulatedNavHost
-import com.skyyo.samples.extensions.log
 
 @Composable
 fun SimpleCore(
     startDestination: String,
-    navController: NavHostController
+    navController: NavHostController,
+    systemUiController: SystemUiController
 ) {
     DisposableEffect(navController) {
         val callback = NavController.OnDestinationChangedListener { _, destination, args ->
-            log("${destination.route}")
             when (destination.route) {
                 Destination.SignIn.route -> {
+                    systemUiController.statusBarDarkContentEnabled = false
                 }
                 else -> {
+                    systemUiController.statusBarDarkContentEnabled = true
                 }
             }
         }

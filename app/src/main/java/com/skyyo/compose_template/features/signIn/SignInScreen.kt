@@ -15,7 +15,7 @@ fun SignInScreen(viewModel: SignInViewModel = hiltViewModel()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Green)
+            .background(Color.Magenta)
     ) {
         Button(onClick = viewModel::goHome, modifier = Modifier.align(Alignment.Center)) {
 

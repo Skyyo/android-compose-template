@@ -95,20 +95,20 @@ class MainActivity : ComponentActivity() {
             }
 
             ComposetemplateTheme {
-                ProvideWindowInsets {
+                ProvideWindowInsets() {
                     // used only for the bottom sheet destinations
                     ModalBottomSheetLayout(bottomSheetNavigator) {
-                        SimpleCore(
-                            startDestination,
-                            navController,
-                            systemUiController
-                        )
-//                        BottomBarCore(
-//                            drawerOrBottomBarScreens,
+//                        SimpleCore(
 //                            startDestination,
 //                            navController,
-//                            systemUiController,
+//                            systemUiController
 //                        )
+                        BottomBarCore(
+                            drawerOrBottomBarScreens,
+                            startDestination,
+                            navController,
+                            systemUiController,
+                        )
 //                        DrawerCore(
 //                            drawerOrBottomBarScreens,
 //                            startDestination,

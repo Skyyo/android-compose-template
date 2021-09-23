@@ -7,9 +7,11 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.skyyo.compose_template.features.tab1.Tab1ViewModel
 
 @Composable
-fun Tab2Screen() {
+fun Tab2Screen(viewModel: Tab2ViewModel = hiltViewModel()) {
     Box(
         modifier = Modifier
             .fillMaxSize()

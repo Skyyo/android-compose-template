@@ -18,13 +18,12 @@ import com.google.accompanist.navigation.material.ExperimentalMaterialNavigation
 import com.google.accompanist.navigation.material.ModalBottomSheetLayout
 import com.google.accompanist.navigation.material.rememberBottomSheetNavigator
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.skyyo.compose_template.R
 import com.skyyo.compose_template.application.Destination
 import com.skyyo.compose_template.application.activity.cores.bottomBar.BottomBarCore
-import com.skyyo.compose_template.application.activity.cores.drawer.DrawerCore
-import com.skyyo.compose_template.application.activity.cores.simple.SimpleCore
 import com.skyyo.compose_template.application.persistance.DataStoreManager
 import com.skyyo.compose_template.application.persistance.room.AppDatabase
-import com.skyyo.compose_template.theme.ComposetemplateTheme
+import com.skyyo.compose_template.theme.ComposeTemplateTheme
 import com.skyyo.compose_template.utils.eventDispatchers.NavigationDispatcher
 import com.skyyo.compose_template.utils.eventDispatchers.UnauthorizedEventDispatcher
 import dagger.hilt.android.AndroidEntryPoint
@@ -54,6 +53,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyEdgeToEdge()
+        setTheme(R.style.ThemeComposeTemplate)
 
         val drawerOrBottomBarScreens = listOf(
             Destination.Tab1,
@@ -94,8 +94,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            ComposetemplateTheme {
-                ProvideWindowInsets() {
+            ComposeTemplateTheme {
+                ProvideWindowInsets {
                     // used only for the bottom sheet destinations
                     ModalBottomSheetLayout(bottomSheetNavigator) {
 //                        SimpleCore(

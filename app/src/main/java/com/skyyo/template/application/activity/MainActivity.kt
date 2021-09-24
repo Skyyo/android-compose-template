@@ -48,6 +48,8 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var appDatabase: AppDatabase
 
+
+    @Suppress("RestrictedApi")
     @OptIn(
         ExperimentalMaterialApi::class,
         ExperimentalMaterialNavigationApi::class,

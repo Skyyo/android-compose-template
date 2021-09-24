@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun DrawerItem(title: String, selected: Boolean, onClick: () -> Unit) {
-    //TODO is remember needed here
     val backgroundColourId = when {
         selected -> android.R.color.holo_blue_light
         else -> android.R.color.transparent

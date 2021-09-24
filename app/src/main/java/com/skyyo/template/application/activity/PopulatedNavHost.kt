@@ -40,7 +40,6 @@ fun PopulatedNavHost(
     composable(Destination.Tab1.route) { Tab1Screen() }
     composable(Destination.Tab2.route) {
         onBackPressIntercepted?.let { BackHandler(onBack = it) }
-        Tab2Screen()
     }
     composable(Destination.Tab3.route) {
         onBackPressIntercepted?.let { BackHandler(onBack = it) }

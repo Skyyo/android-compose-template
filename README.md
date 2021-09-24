@@ -2,7 +2,7 @@
 Template repository with various commonly used components, to reduce "project setup" time.
 After setup [change package name everywhere](https://stackoverflow.com/questions/16804093/rename-package-in-android-studio/35057550#35057550).
 
-# During developement (Code style/approaches recommendations)
+# During developement
 
 * Always attempt to have a single line ```if/else``` statement. In that case braces aren't needed. If the ```if/else``` expression exceeds single line - please use braces. If only an ```if``` is used and expression is a single line - braces aren't needed. Also consider using ```when``` for value assignments, most of the times it's a better fit than ```if/else``` flow.
 ```kotlin

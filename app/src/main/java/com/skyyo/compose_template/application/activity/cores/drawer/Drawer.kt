@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.insets.statusBarsPadding
 import com.skyyo.compose_template.application.Destination
 
 @Composable
@@ -13,7 +15,7 @@ fun Drawer(
     selectedTab: Int,
     onTabClick: (index: Int, route: String) -> Unit
 ) {
-    Column {
+    Column(Modifier.statusBarsPadding().navigationBarsPadding()) {
         screens.forEachIndexed { index, screen ->
             DrawerItem(
                 title = stringResource(screen.resourceId),

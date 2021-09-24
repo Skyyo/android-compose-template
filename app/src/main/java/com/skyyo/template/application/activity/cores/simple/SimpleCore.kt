@@ -1,6 +1,5 @@
 package com.skyyo.template.application.activity.cores.simple
 
-import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.navigation.NavController
@@ -31,14 +30,8 @@ fun SimpleCore(
             navController.removeOnDestinationChangedListener(callback)
         }
     }
-
-    Scaffold(
-        content = { innerPadding ->
-            PopulatedNavHost(
-                startDestination = startDestination,
-                innerPadding = innerPadding,
-                navController = navController
-            )
-        }
+    PopulatedNavHost(
+        startDestination = startDestination,
+        navController = navController
     )
 }

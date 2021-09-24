@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.skyyo.compose_template", appContext.packageName)
+        assertEquals("com.skyyo.template", appContext.packageName)
     }
 }

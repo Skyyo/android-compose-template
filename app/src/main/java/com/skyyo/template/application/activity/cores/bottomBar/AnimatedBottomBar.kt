@@ -31,6 +31,7 @@ private const val FADE_OUT_ANIMATION_DURATION = 300
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AnimatedBottomBar(
+    modifier: Modifier,
     items: List<Destination>,
     selectedIndex: Int,
     isBottomBarVisible: Boolean,
@@ -67,6 +68,7 @@ fun AnimatedBottomBar(
     }
 
     return AnimatedVisibility(
+        modifier = modifier,
         visible = isBottomBarVisible,
         enter = enterSlide + enterFadeIn,
         exit = exitSlide + exitFadeOut,

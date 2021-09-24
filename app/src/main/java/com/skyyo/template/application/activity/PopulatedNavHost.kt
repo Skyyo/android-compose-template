@@ -2,11 +2,8 @@ package com.skyyo.template.application.activity
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
@@ -27,13 +24,11 @@ import com.skyyo.template.features.tab3.Tab3Screen
 @Composable
 fun PopulatedNavHost(
     startDestination: String,
-    innerPadding: PaddingValues,
     navController: NavHostController,
     onBackPressIntercepted: (() -> Unit)? = null
 ) = AnimatedNavHost(
     navController = navController,
     startDestination = startDestination,
-    modifier = Modifier.padding(innerPadding)
 ) {
     composable(Destination.SignIn.route) { SignInScreen() }
 

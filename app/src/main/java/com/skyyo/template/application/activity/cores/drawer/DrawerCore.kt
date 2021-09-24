@@ -85,10 +85,9 @@ fun DrawerCore(
                 }
             }
         },
-        content = { innerPadding ->
+        content = {
             PopulatedNavHost(
                 startDestination = startDestination,
-                innerPadding = innerPadding,
                 navController = navController,
                 onBackPressIntercepted = {
                     selectedTab.value = 0

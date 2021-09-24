@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.skyyo.compose_template">
+    package="com.skyyo.template">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name=".application.Application"
+        android:name="com.skyyo.template.application.Application"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/ThemeSplash">
         <activity
-            android:name=".application.activity.MainActivity"
+            android:name="com.skyyo.template.application.activity.MainActivity"
             android:exported="true"
             android:label="@string/app_name">
             <intent-filter>

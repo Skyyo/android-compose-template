@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">compose-template</string>
+    <string name="network_error">Network Error</string>
 </resources>

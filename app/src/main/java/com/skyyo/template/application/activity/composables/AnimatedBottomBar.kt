@@ -1,4 +1,4 @@
-package com.skyyo.template.application.activity.cores.bottomBar
+package com.skyyo.template.application.activity.composables
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutLinearInEasing

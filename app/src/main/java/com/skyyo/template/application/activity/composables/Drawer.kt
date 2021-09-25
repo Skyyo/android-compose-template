@@ -1,4 +1,4 @@
-package com.skyyo.template.application.activity.cores.drawer
+package com.skyyo.template.application.activity.composables
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

@@ -361,7 +361,6 @@ class MainActivity : ComponentActivity() {
 //        }
 //    }
 
-
     @Suppress("GlobalCoroutineUsage")
     @OptIn(DelicateCoroutinesApi::class)
     private fun onUnauthorizedEventReceived() {

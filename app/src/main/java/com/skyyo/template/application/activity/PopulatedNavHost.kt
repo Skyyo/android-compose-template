@@ -2,6 +2,9 @@ package com.skyyo.template.application.activity
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -29,6 +32,8 @@ fun PopulatedNavHost(
 ) = AnimatedNavHost(
     navController = navController,
     startDestination = startDestination,
+    enterTransition = { _, _ -> fadeIn(animationSpec = tween(durationMillis = 350)) },
+    exitTransition = { _, _ -> fadeOut(animationSpec = tween(durationMillis = 350)) },
 ) {
     composable(Destination.SignIn.route) { SignInScreen() }
 

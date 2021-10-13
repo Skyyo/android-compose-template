@@ -1,5 +1,8 @@
 # android-compose-template
 Template repository with various commonly used components, to reduce "project setup" time.
+
+Fragment based template can be found [here](https://github.com/Skyyo/android-template).
+
 After setup [change package name everywhere](https://stackoverflow.com/questions/16804093/rename-package-in-android-studio/35057550#35057550).
 
 # During developement

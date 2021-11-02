@@ -3,17 +3,19 @@ package com.skyyo.template.application.activity
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.view.View
+import android.view.ViewTreeObserver
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.material.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.plusAssign
 import com.google.accompanist.insets.ProvideWindowInsets
@@ -22,7 +24,6 @@ import com.google.accompanist.navigation.material.ExperimentalMaterialNavigation
 import com.google.accompanist.navigation.material.ModalBottomSheetLayout
 import com.google.accompanist.navigation.material.rememberBottomSheetNavigator
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.skyyo.template.R
 import com.skyyo.template.application.Destination
 import com.skyyo.template.application.persistance.DataStoreManager
 import com.skyyo.template.application.persistance.room.AppDatabase
@@ -37,6 +38,7 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     @Inject
     lateinit var dataStoreManager: DataStoreManager
 
@@ -49,6 +51,8 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var appDatabase: AppDatabase
 
+    private var startDestination: String? = null
+
     @Suppress("RestrictedApi")
     @OptIn(
         ExperimentalMaterialApi::class,
@@ -58,308 +62,328 @@ class MainActivity : ComponentActivity() {
     // simple core
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installSplashScreen()
         lockIntoPortrait()
         applyEdgeToEdge()
-        setTheme(R.style.ThemeTemplate)
+        observeSplashScreenVisibility(onReadyToDraw = {
+            setContent {
+                val lifecycleOwner = LocalLifecycleOwner.current
+                val systemUiController = rememberSystemUiController()
+                val navController = rememberAnimatedNavController()
 
-        val startDestination = when {
-            runBlocking { dataStoreManager.getAccessToken() } == null -> Destination.SignIn.route
-            else -> Destination.Tab1.route
-        }
+                val bottomSheetNavigator = rememberBottomSheetNavigator()
+                navController.navigatorProvider += bottomSheetNavigator
 
-        setContent {
-            val lifecycleOwner = LocalLifecycleOwner.current
-            val systemUiController = rememberSystemUiController()
-            val navController = rememberAnimatedNavController()
-
-            val bottomSheetNavigator = rememberBottomSheetNavigator()
-            navController.navigatorProvider += bottomSheetNavigator
-
-            val navigationEvents = remember(navigationDispatcher.emitter, lifecycleOwner) {
-                navigationDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
-                    lifecycleOwner.lifecycle,
-                    Lifecycle.State.STARTED
-                )
-            }
-            val unauthorizedEvents = remember(unauthorizedEventDispatcher.emitter, lifecycleOwner) {
-                unauthorizedEventDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
-                    lifecycleOwner.lifecycle,
-                    Lifecycle.State.STARTED
-                )
-            }
-
-            LaunchedEffect(Unit) {
-                launch {
-                    navigationEvents.collect { event -> event(navController) }
+                val navigationEvents = remember(navigationDispatcher.emitter, lifecycleOwner) {
+                    navigationDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
+                        lifecycleOwner.lifecycle,
+                        Lifecycle.State.STARTED
+                    )
                 }
-                launch {
-                    unauthorizedEvents.collect { onUnauthorizedEventReceived() }
-                }
-            }
-
-            DisposableEffect(navController) {
-                val callback = NavController.OnDestinationChangedListener { _, destination, _ ->
-                    when (destination.route) {
-                        Destination.SignIn.route -> {
-                            systemUiController.statusBarDarkContentEnabled = false
-                        }
-                        else -> {
-                            systemUiController.statusBarDarkContentEnabled = true
-                        }
-                    }
-                }
-                navController.addOnDestinationChangedListener(callback)
-                onDispose {
-                    navController.removeOnDestinationChangedListener(callback)
-                }
-            }
-
-            TemplateTheme {
-                ProvideWindowInsets {
-                    // used only for the bottom sheet destinations
-                    ModalBottomSheetLayout(bottomSheetNavigator) {
-                        PopulatedNavHost(
-                            startDestination = startDestination,
-                            navController = navController
+                val unauthorizedEvents = remember(unauthorizedEventDispatcher.emitter, lifecycleOwner) {
+                    unauthorizedEventDispatcher.emitter.receiveAsFlow()
+                        .flowWithLifecycle(
+                            lifecycleOwner.lifecycle,
+                            Lifecycle.State.STARTED
                         )
+                }
+
+                LaunchedEffect(Unit) {
+                    launch {
+                        navigationEvents.collect { event -> event(navController) }
+                    }
+                    launch {
+                        unauthorizedEvents.collect { onUnauthorizedEventReceived() }
+                    }
+                }
+
+                DisposableEffect(navController) {
+                    val callback = NavController.OnDestinationChangedListener { _, destination, _ ->
+                        when (destination.route) {
+                            Destination.SignIn.route -> {
+                                systemUiController.statusBarDarkContentEnabled = false
+                            }
+                            else -> {
+                                systemUiController.statusBarDarkContentEnabled = true
+                            }
+                        }
+                    }
+                    navController.addOnDestinationChangedListener(callback)
+                    onDispose {
+                        navController.removeOnDestinationChangedListener(callback)
+                    }
+                }
+
+                TemplateTheme {
+                    ProvideWindowInsets {
+                        // used only for the bottom sheet destinations
+                        ModalBottomSheetLayout(bottomSheetNavigator) {
+                            PopulatedNavHost(
+                                startDestination = startDestination!!,
+                                navController = navController
+                            )
+                        }
                     }
                 }
             }
+        })
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) { startDestination = provideStartDestination() }
         }
     }
 
     // bottom bar core
 //    override fun onCreate(savedInstanceState: Bundle?) {
 //        super.onCreate(savedInstanceState)
+//        installSplashScreen()
 //        lockIntoPortrait()
 //        applyEdgeToEdge()
-//        setTheme(R.style.ThemeTemplate)
-//
 //        val bottomBarScreens = listOf(
 //            Destination.Tab1,
 //            Destination.Tab2,
 //            Destination.Tab3,
 //        )
-//        val startDestination = when {
-//            runBlocking { dataStoreManager.getAccessToken() } == null -> Destination.SignIn.route
-//            else -> Destination.Tab1.route
-//        }
+//        observeSplashScreenVisibility(onReadyToDraw = {
+//            setContent {
+//                val lifecycleOwner = LocalLifecycleOwner.current
+//                val systemUiController = rememberSystemUiController()
+//                val navController = rememberAnimatedNavController()
 //
-//        setContent {
-//            val lifecycleOwner = LocalLifecycleOwner.current
-//            val systemUiController = rememberSystemUiController()
-//            val navController = rememberAnimatedNavController()
+//                val bottomSheetNavigator = rememberBottomSheetNavigator()
+//                navController.navigatorProvider += bottomSheetNavigator
 //
-//            val bottomSheetNavigator = rememberBottomSheetNavigator()
-//            navController.navigatorProvider += bottomSheetNavigator
-//
-//            val navigationEvents = remember(navigationDispatcher.emitter, lifecycleOwner) {
-//                navigationDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
-//                    lifecycleOwner.lifecycle,
-//                    Lifecycle.State.STARTED
-//                )
-//            }
-//            val unauthorizedEvents = remember(unauthorizedEventDispatcher.emitter, lifecycleOwner) {
-//                unauthorizedEventDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
-//                    lifecycleOwner.lifecycle,
-//                    Lifecycle.State.STARTED
-//                )
-//            }
-//
-//            val isBottomBarVisible = rememberSaveable { mutableStateOf(false) }
-//            val selectedTab = rememberSaveable { mutableStateOf(0) }
-//
-//            LaunchedEffect(Unit) {
-//                launch {
-//                    navigationEvents.collect { event -> event(navController) }
+//                val navigationEvents = remember(navigationDispatcher.emitter, lifecycleOwner) {
+//                    navigationDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
+//                        lifecycleOwner.lifecycle,
+//                        Lifecycle.State.STARTED
+//                    )
 //                }
-//                launch {
-//                    unauthorizedEvents.collect { onUnauthorizedEventReceived() }
+//                val unauthorizedEvents = remember(unauthorizedEventDispatcher.emitter, lifecycleOwner) {
+//                    unauthorizedEventDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
+//                        lifecycleOwner.lifecycle,
+//                        Lifecycle.State.STARTED
+//                    )
 //                }
-//            }
 //
-//            DisposableEffect(Unit) {
-//                val callback = NavController.OnDestinationChangedListener { _, destination, _ ->
-//                    when (destination.route) {
-//                        Destination.SignIn.route -> {
-//                            systemUiController.statusBarDarkContentEnabled = false
-//                            isBottomBarVisible.value = false
-//                        }
-//                        else -> {
-//                            isBottomBarVisible.value = true
-//                        }
+//                val isBottomBarVisible = rememberSaveable { mutableStateOf(false) }
+//                val selectedTab = rememberSaveable { mutableStateOf(0) }
+//
+//                LaunchedEffect(Unit) {
+//                    launch {
+//                        navigationEvents.collect { event -> event(navController) }
+//                    }
+//                    launch {
+//                        unauthorizedEvents.collect { onUnauthorizedEventReceived() }
 //                    }
 //                }
-//                navController.addOnDestinationChangedListener(callback)
-//                onDispose {
-//                    navController.removeOnDestinationChangedListener(callback)
-//                }
-//            }
 //
-//            TemplateTheme {
-//                ProvideWindowInsets {
-//                    // used only for the bottom sheet destinations
-//                    ModalBottomSheetLayout(bottomSheetNavigator) {
-//                        Box {
-//                            PopulatedNavHost(
-//                                startDestination = startDestination,
-//                                navController = navController,
-//                                onBackPressIntercepted = {
-//                                    selectedTab.value = 0
-//                                    navController.navigateToRootDestination(Destination.Tab1.route)
-//                                }
-//                            )
-//                            AnimatedBottomBar(
-//                                Modifier.align(Alignment.BottomCenter),
-//                                bottomBarScreens,
-//                                selectedTab.value,
-//                                isBottomBarVisible.value
-//                            ) { index, route ->
-//                                // this means we're already on the selected tab
-//                                if (index == selectedTab.value) return@AnimatedBottomBar
-//                                selectedTab.value = index
-//                                navController.navigateToRootDestination(route)
+//                DisposableEffect(Unit) {
+//                    val callback = NavController.OnDestinationChangedListener { _, destination, _ ->
+//                        when (destination.route) {
+//                            Destination.SignIn.route -> {
+//                                systemUiController.statusBarDarkContentEnabled = false
+//                                isBottomBarVisible.value = false
+//                            }
+//                            else -> {
+//                                isBottomBarVisible.value = true
 //                            }
 //                        }
 //                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    // drawer core
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        lockIntoPortrait()
-//
-//        applyEdgeToEdge()
-//        setTheme(R.style.ThemeTemplate)
-//
-//        val drawerScreens = listOf(
-//            Destination.Tab1,
-//            Destination.Tab2,
-//            Destination.Tab3,
-//        )
-//        val startDestination = when {
-//            runBlocking { dataStoreManager.getAccessToken() } == null -> Destination.SignIn.route
-//            else -> Destination.Tab1.route
-//        }
-//
-//        setContent {
-//            val lifecycleOwner = LocalLifecycleOwner.current
-//            val systemUiController = rememberSystemUiController()
-//            val navController = rememberAnimatedNavController()
-//
-//            val bottomSheetNavigator = rememberBottomSheetNavigator()
-//            navController.navigatorProvider += bottomSheetNavigator
-//
-//            val navigationEvents = remember(navigationDispatcher.emitter, lifecycleOwner) {
-//                navigationDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
-//                    lifecycleOwner.lifecycle,
-//                    Lifecycle.State.STARTED
-//                )
-//            }
-//            val unauthorizedEvents = remember(unauthorizedEventDispatcher.emitter, lifecycleOwner) {
-//                unauthorizedEventDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
-//                    lifecycleOwner.lifecycle,
-//                    Lifecycle.State.STARTED
-//                )
-//            }
-//
-//            val isDrawerVisible = rememberSaveable { mutableStateOf(false) }
-//            val selectedTab = rememberSaveable { mutableStateOf(0) }
-//            val scaffoldState = rememberScaffoldState()
-//            val scope = rememberCoroutineScope()
-//
-//            LaunchedEffect(Unit) {
-//                launch {
-//                    navigationEvents.collect { event -> event(navController) }
-//                }
-//                launch {
-//                    unauthorizedEvents.collect { onUnauthorizedEventReceived() }
-//                }
-//            }
-//
-//            DisposableEffect(Unit) {
-//                val callback = NavController.OnDestinationChangedListener { _, destination, _ ->
-//                    when (destination.route) {
-//                        Destination.SignIn.route -> {
-//                            systemUiController.statusBarDarkContentEnabled = false
-//                            isDrawerVisible.value = false
-//                        }
-//                        else -> {
-//                            systemUiController.statusBarDarkContentEnabled = true
-//                            isDrawerVisible.value = true
-//                        }
+//                    navController.addOnDestinationChangedListener(callback)
+//                    onDispose {
+//                        navController.removeOnDestinationChangedListener(callback)
 //                    }
 //                }
-//                navController.addOnDestinationChangedListener(callback)
-//                onDispose {
-//                    navController.removeOnDestinationChangedListener(callback)
-//                }
-//            }
 //
-//            TemplateTheme {
-//                ProvideWindowInsets {
-//                    // used only for the bottom sheet destinations
-//                    ModalBottomSheetLayout(bottomSheetNavigator) {
-//                        val animationSpec = remember { tween<Float>(500) }
-//                        Scaffold(
-//                            scaffoldState = scaffoldState,
-//                            // this allows to dismiss the drawer if its open by tapping on dimmed area
-//                            drawerGesturesEnabled = scaffoldState.drawerState.let { it.isOpen && !it.isAnimationRunning },
-//                            floatingActionButton = {
-//                                if (isDrawerVisible.value) {
-//                                    FloatingActionButton(onClick = {
-//                                        scope.launch {
-//                                            scaffoldState.drawerState.animateTo(
-//                                                DrawerValue.Open,
-//                                                animationSpec
-//                                            )
-//                                        }
-//                                    }) {
-//                                        Text(text = "open drawer")
-//                                    }
-//                                }
-//                            },
-//                            drawerContent = {
-//                                if (isDrawerVisible.value) {
-//                                    Drawer(
-//                                        screens = drawerScreens,
-//                                        selectedTab = selectedTab.value
-//                                    ) { index, route ->
-//                                        // this means we're already on the selected tab
-//                                        if (index != selectedTab.value) {
-//                                            selectedTab.value = index
-//                                            navController.navigateToRootDestination(route)
-//                                        }
-//                                        // Skip closing drawer if it's not opened completely
-//                                        if (scaffoldState.drawerState.let { it.isClosed && it.isAnimationRunning }) return@Drawer
-//                                        scope.launch {
-//                                            scaffoldState.drawerState.animateTo(
-//                                                DrawerValue.Closed,
-//                                                animationSpec
-//                                            )
-//                                        }
-//                                    }
-//                                }
-//                            },
-//                            content = {
+//                TemplateTheme {
+//                    ProvideWindowInsets {
+//                        // used only for the bottom sheet destinations
+//                        ModalBottomSheetLayout(bottomSheetNavigator) {
+//                            Box {
 //                                PopulatedNavHost(
-//                                    startDestination = startDestination,
+//                                    startDestination = startDestination!!,
 //                                    navController = navController,
 //                                    onBackPressIntercepted = {
 //                                        selectedTab.value = 0
 //                                        navController.navigateToRootDestination(Destination.Tab1.route)
 //                                    }
 //                                )
+//                                AnimatedBottomBar(
+//                                    Modifier.align(Alignment.BottomCenter),
+//                                    bottomBarScreens,
+//                                    selectedTab.value,
+//                                    isBottomBarVisible.value
+//                                ) { index, route ->
+//                                    // this means we're already on the selected tab
+//                                    if (index == selectedTab.value) return@AnimatedBottomBar
+//                                    selectedTab.value = index
+//                                    navController.navigateToRootDestination(route)
+//                                }
 //                            }
-//                        )
+//                        }
 //                    }
 //                }
 //            }
+//        })
+//        lifecycleScope.launch {
+//            withContext(Dispatchers.IO) { startDestination = provideStartDestination() }
 //        }
 //    }
+//
+//    // drawer core
+//    override fun onCreate(savedInstanceState: Bundle?) {
+//        super.onCreate(savedInstanceState)
+//        installSplashScreen()
+//        lockIntoPortrait()
+//        applyEdgeToEdge()
+//        val drawerScreens = listOf(
+//            Destination.Tab1,
+//            Destination.Tab2,
+//            Destination.Tab3,
+//        )
+//        observeSplashScreenVisibility(onReadyToDraw = {
+//            setContent {
+//                val lifecycleOwner = LocalLifecycleOwner.current
+//                val systemUiController = rememberSystemUiController()
+//                val navController = rememberAnimatedNavController()
+//
+//                val bottomSheetNavigator = rememberBottomSheetNavigator()
+//                navController.navigatorProvider += bottomSheetNavigator
+//
+//                val navigationEvents = remember(navigationDispatcher.emitter, lifecycleOwner) {
+//                    navigationDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
+//                        lifecycleOwner.lifecycle,
+//                        Lifecycle.State.STARTED
+//                    )
+//                }
+//                val unauthorizedEvents =
+//                    remember(unauthorizedEventDispatcher.emitter, lifecycleOwner) {
+//                        unauthorizedEventDispatcher.emitter.receiveAsFlow().flowWithLifecycle(
+//                            lifecycleOwner.lifecycle,
+//                            Lifecycle.State.STARTED
+//                        )
+//                    }
+//
+//                val isDrawerVisible = rememberSaveable { mutableStateOf(false) }
+//                val selectedTab = rememberSaveable { mutableStateOf(0) }
+//                val scaffoldState = rememberScaffoldState()
+//                val scope = rememberCoroutineScope()
+//
+//                LaunchedEffect(Unit) {
+//                    launch {
+//                        navigationEvents.collect { event -> event(navController) }
+//                    }
+//                    launch {
+//                        unauthorizedEvents.collect { onUnauthorizedEventReceived() }
+//                    }
+//                }
+//
+//                DisposableEffect(Unit) {
+//                    val callback = NavController.OnDestinationChangedListener { _, destination, _ ->
+//                        when (destination.route) {
+//                            Destination.SignIn.route -> {
+//                                systemUiController.statusBarDarkContentEnabled = false
+//                                isDrawerVisible.value = false
+//                            }
+//                            else -> {
+//                                systemUiController.statusBarDarkContentEnabled = true
+//                                isDrawerVisible.value = true
+//                            }
+//                        }
+//                    }
+//                    navController.addOnDestinationChangedListener(callback)
+//                    onDispose {
+//                        navController.removeOnDestinationChangedListener(callback)
+//                    }
+//                }
+//
+//                TemplateTheme {
+//                    ProvideWindowInsets {
+//                        // used only for the bottom sheet destinations
+//                        ModalBottomSheetLayout(bottomSheetNavigator) {
+//                            val animationSpec = remember { tween<Float>(500) }
+//                            Scaffold(
+//                                scaffoldState = scaffoldState,
+//                                // this allows to dismiss the drawer if its open by tapping on dimmed area
+//                                drawerGesturesEnabled = scaffoldState.drawerState.let { it.isOpen && !it.isAnimationRunning },
+//                                floatingActionButton = {
+//                                    if (isDrawerVisible.value) {
+//                                        FloatingActionButton(onClick = {
+//                                            scope.launch {
+//                                                scaffoldState.drawerState.animateTo(
+//                                                    DrawerValue.Open,
+//                                                    animationSpec
+//                                                )
+//                                            }
+//                                        }) {
+//                                            Text(text = "open drawer")
+//                                        }
+//                                    }
+//                                },
+//                                drawerContent = {
+//                                    if (isDrawerVisible.value) {
+//                                        Drawer(
+//                                            screens = drawerScreens,
+//                                            selectedTab = selectedTab.value
+//                                        ) { index, route ->
+//                                            // this means we're already on the selected tab
+//                                            if (index != selectedTab.value) {
+//                                                selectedTab.value = index
+//                                                navController.navigateToRootDestination(route)
+//                                            }
+//                                            // Skip closing drawer if it's not opened completely
+//                                            if (scaffoldState.drawerState.let { it.isClosed && it.isAnimationRunning }) return@Drawer
+//                                            scope.launch {
+//                                                scaffoldState.drawerState.animateTo(
+//                                                    DrawerValue.Closed,
+//                                                    animationSpec
+//                                                )
+//                                            }
+//                                        }
+//                                    }
+//                                },
+//                                content = {
+//                                    PopulatedNavHost(
+//                                        startDestination = startDestination!!,
+//                                        navController = navController,
+//                                        onBackPressIntercepted = {
+//                                            selectedTab.value = 0
+//                                            navController.navigateToRootDestination(Destination.Tab1.route)
+//                                        }
+//                                    )
+//                                }
+//                            )
+//                        }
+//                    }
+//                }
+//            }
+//        })
+//        lifecycleScope.launch {
+//            withContext(Dispatchers.IO) { startDestination = provideStartDestination() }
+//        }
+//    }
+
+    private suspend fun provideStartDestination(): String {
+        val accessToken = dataStoreManager.getAccessToken()
+        return if (accessToken == null) Destination.SignIn.route else Destination.Tab1.route
+    }
+
+    private fun observeSplashScreenVisibility(onReadyToDraw: () -> Unit) {
+        val content: View = findViewById(android.R.id.content)
+        content.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                return if (startDestination != null) {
+                    // The content is ready; start drawing.
+                    content.viewTreeObserver.removeOnPreDrawListener(this)
+                    onReadyToDraw()
+                    true
+                } else {
+                    // The content is not ready; suspend.
+                    false
+                }
+            }
+        })
+    }
 
     @Suppress("GlobalCoroutineUsage")
     @OptIn(DelicateCoroutinesApi::class)

@@ -8,8 +8,10 @@ import android.view.ViewTreeObserver
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
@@ -80,13 +82,14 @@ class MainActivity : ComponentActivity() {
                         Lifecycle.State.STARTED
                     )
                 }
-                val unauthorizedEvents = remember(unauthorizedEventDispatcher.emitter, lifecycleOwner) {
-                    unauthorizedEventDispatcher.emitter.receiveAsFlow()
-                        .flowWithLifecycle(
-                            lifecycleOwner.lifecycle,
-                            Lifecycle.State.STARTED
-                        )
-                }
+                val unauthorizedEvents =
+                    remember(unauthorizedEventDispatcher.emitter, lifecycleOwner) {
+                        unauthorizedEventDispatcher.emitter.receiveAsFlow()
+                            .flowWithLifecycle(
+                                lifecycleOwner.lifecycle,
+                                Lifecycle.State.STARTED
+                            )
+                    }
 
                 LaunchedEffect(Unit) {
                     launch {

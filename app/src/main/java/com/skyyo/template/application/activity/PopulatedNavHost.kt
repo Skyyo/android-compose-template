@@ -32,8 +32,8 @@ fun PopulatedNavHost(
 ) = AnimatedNavHost(
     navController = navController,
     startDestination = startDestination,
-    enterTransition = { _, _ -> fadeIn(animationSpec = tween(durationMillis = 350)) },
-    exitTransition = { _, _ -> fadeOut(animationSpec = tween(durationMillis = 350)) },
+    enterTransition = { fadeIn(animationSpec = tween(durationMillis = 350)) },
+    exitTransition = { fadeOut(animationSpec = tween(durationMillis = 350)) },
 ) {
     composable(Destination.SignIn.route) { SignInScreen() }
 
